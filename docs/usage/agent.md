@@ -110,7 +110,7 @@ loginctl enable-linger "$USER"
 | Command | What it does |
 |---|---|
 | `dimos agent [--conversation ID] [--view] [--cwd DIR]` | Opens a terminal. Without `--conversation`, it starts a new conversation. It starts the gateway if none runs. |
-| `dimos agent run [--conversation ID] [--cwd DIR] PROMPT` | Sends `PROMPT` to a new conversation, or to conversation `ID`, and prints the answer. |
+| `dimos agent run [--conversation ID] [--cwd DIR] [--json] PROMPT` | Sends `PROMPT` to a new conversation, or to conversation `ID`, and prints the answer. With `--json`, it prints the new transcript items and then the outcome as JSON lines. |
 | `dimos agent conversations` | Lists the conversations, newest first. |
 | `dimos agent gateway` | Runs the gateway in the foreground. The service runs this command. |
 | `dimos agent status` | Shows whether the gateway runs. A socket file that nothing answers is reported as stale. |
@@ -128,6 +128,7 @@ A running gateway keeps the build it started with. After a rebuild, `dimos agent
 | Path | Owner | Contents |
 |---|---|---|
 | `~/.config/dimos/agent/` | gateway | `auth.json` and `config.json`, copied once from `~/.dimcode` when it exists |
+| `~/.config/dimos/agent/models.json` | you | Optional provider overrides in pi's `models.json` format, such as a base URL |
 | `~/.config/dimos/agent/skills/` | you | Your own skills, one `NAME/SKILL.md` each. The agent lists them after the bundled ones in `dimos/agents/harness/skills/`. |
 | `~/.config/systemd/user/dimos-agent.service` | `dimos agent service install` | The service unit |
 | `~/.local/state/dimos/agent/agent.sqlite` | gateway | Conversations, entries, tasks, submissions and documents, including jobs and the event and trajectory positions |
