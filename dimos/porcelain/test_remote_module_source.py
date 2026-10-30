@@ -30,7 +30,7 @@ from dimos.core.core import rpc
 from dimos.core.demos.stress_test_module import StressTestModule
 from dimos.core.global_config import GlobalConfig
 from dimos.core.module import Module
-from dimos.core.stream import IO, In, Out
+from dimos.core.stream import IO, In, Out, TransportSpec
 from dimos.core.transport import LCMTransport, pLCMTransport
 from dimos.msgs.geometry_msgs.Vector3 import Vector3
 from dimos.porcelain.dimos import Dimos
@@ -369,6 +369,14 @@ def test_connect_discovers_only_wired_streams(running_app, client, stream_module
         assert all(s.channel.endswith(f"/{s.name}") for s in streams)
     assert client.list_streams(client.get_module("remote/streams")) == streams
     assert {s.module_name for s in client.list_streams()} >= {"remote/streams"}
+    # Descriptors are data on both sides: nothing is built until a stream is asked for.
+    for app in (running_app, client):
+        descriptors = [
+            d for d in app._source.list_stream_descriptors() if d.module == "remote/streams"
+        ]
+        assert len(descriptors) == 3
+        assert all(type(d.transport) is TransportSpec for d in descriptors)
+        assert all(d.transport.cls is pLCMTransport for d in descriptors)
 
 
 @pytest.mark.parametrize("name", ["messages", "commands", "state"])
@@ -441,8 +449,11 @@ def test_connected_stream_uses_configured_lcm_bus(
 def test_get_stream_subscribes_when_module_class_is_unavailable(
     client, stream_module, collected, mocker
 ):
+    # Patch this module's importlib binding only: the shared importlib.import_module
+    # also serves the CBOR codec, which must keep resolving classes by reference.
     import_module = mocker.patch(
-        "dimos.porcelain.remote_module_source.importlib.import_module", side_effect=ImportError
+        "dimos.porcelain.remote_module_source.importlib",
+        **{"import_module.side_effect": ImportError},
     )
     module = client.get_module("remote/streams")
     mocker.stop(import_module)
